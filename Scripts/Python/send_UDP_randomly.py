@@ -14,7 +14,7 @@ from time import clock
 def set_argparse():
   """Set the args&argv for command line mode"""
   parser = argparse.ArgumentParser()
-  parser.add_argument("--ip", type=str, default="127.0.0.1", help="Destination IP")
+  parser.add_argument("--ip", type=str, default="192.168.3.120", help="Destination IP")
   parser.add_argument("--port", type=int, default=53360, help="Destination Port")
   parser.add_argument("--cnt", type=int, default=50000, help="Sum of packages to be sent")
   return parser.parse_args()
