@@ -43,7 +43,14 @@ def get_logger(logname):
 __logger__ = get_logger('send_UDP_randomly')
 
 
+def generate_1500_str():
+  random.seed()
+  tmp_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1500))
+  return (tmp_str, 1500)
+
+
 def generate_random_str():
+  random.seed()
   tmp_length = random.randint(400, 1440)
   tmp_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=tmp_length))
   return (tmp_str, tmp_length)
@@ -57,12 +64,16 @@ def main():
   sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
   start = time.monotonic()
   sum_sent_bytes = 0
+  tmp_length = 0
+  message_tuple = generate_1500_str()
+  random.seed()
   for index in range(1, __ARGS__.cnt + 1, 1):
     if index % 10 == 0:
       print("Send packet sum: %d" % index, end='\r')
-    message_tuple = generate_random_str()
-    sum_sent_bytes += message_tuple[1]
-    sock.sendto(bytes(message_tuple[0], "utf-8"), (__ARGS__.ip, __ARGS__.port))
+    tmp_length = random.randint(400, 1440)
+    sum_sent_bytes += tmp_length
+    # sum_sent_bytes += message_tuple[1]
+    sock.sendto(bytes(message_tuple[0][:tmp_length], "utf-8"), (__ARGS__.ip, __ARGS__.port))
   finish = time.monotonic()
   __logger__.info("Send %.2lf MB in duration %.3lfs, speed is %.3lfMbps" %
                   (sum_sent_bytes / 1024 / 1024, finish - start, sum_sent_bytes /
