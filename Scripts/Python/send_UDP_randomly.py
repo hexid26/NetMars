@@ -51,7 +51,7 @@ def generate_1500_str():
 
 def generate_random_str():
   random.seed()
-  tmp_length = random.randint(400, 1440)
+  tmp_length = random.randint(60, 1440)
   tmp_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=tmp_length))
   return (tmp_str, tmp_length)
 
