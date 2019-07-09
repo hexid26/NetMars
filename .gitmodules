@@ -1,3 +1,6 @@
 [submodule "Netmap"]
 	path = Netmap
 	url = https://github.com/luigirizzo/netmap.git
+[submodule "netmap-tutorial"]
+	path = netmap-tutorial
+	url = https://github.com/netmap-unipi/netmap-tutorial.git
