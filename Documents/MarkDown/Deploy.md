@@ -26,7 +26,7 @@ sudo make modules_prepare
 进行编译前的配置：
 
 ```shell
-./configure --kernel-dir=/usr/src/linux-source-4.15.0/linux-source-4.15.0/ --kernel-sources=/usr/src/linux-source-4.15.0/linux-source-4.15.0/ --kernel-version=4.15.0-54-generic --select-version=ixgbevf:4.6.1 --select-version=i40e:2.8.43 --select-version=e1000e:3.4.2.4 --select-version=igb:5.3.5.22
+./configure --kernel-dir=/usr/src/linux-source-4.15.0/linux-source-4.15.0/ --kernel-sources=/usr/src/linux-source-4.15.0/linux-source-4.15.0/ --kernel-version=4.15.0-54-generic --select-version=ixgbevf:4.6.1 --select-version=i40e:2.8.43 --select-version=e1000e:3.4.2.4 --select-version=igb:5.3.5.36
 ```
 
 1. 其中，kernel 的路径都指向之前下载后进行处理过的源码路径；
@@ -36,6 +36,14 @@ sudo make modules_prepare
 编译 `make`
 
 安装 `sudo make install`
+
+重启加载新内核
+
+启动之后用一下命令检查网卡驱动
+
+```s
+sudo ethtool -i ethX
+```
 
 ## **使用注意事项**
 

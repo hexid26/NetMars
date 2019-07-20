@@ -4,7 +4,7 @@
 #define NETMAP_WITH_LIBS
 #include <net/netmap_user.h>
 
-int pps = 0;
+long int pps = 0;
 
 static void receive_packets(struct netmap_ring *ring) {
   int i;
@@ -16,6 +16,11 @@ static void receive_packets(struct netmap_ring *ring) {
     buf = NETMAP_BUF(ring, ring->slot[i].buf_idx);  // buf 就是收到的报文喽
     pps++;                                          // 统计收包个数
     ring->head = ring->cur = nm_ring_next(ring, i); // 下一个槽位
+    if (pps % 10 == 0)
+    {
+      printf("Rcv sum = %ld\r", pps);
+      fflush(stdout);
+    }
   }
 }
 
@@ -25,7 +30,7 @@ int main(void) {
   struct netmap_ring *ring;
   int i;
 
-  d = nm_open("netmap:eth0", NULL, 0, 0); // 注意格式，netmap:ehtX
+  d = nm_open("netmap:enp7s0", NULL, 0, 0); // 注意格式，netmap:ehtX
 
   // d 的返回值我这里就不判断了
 
