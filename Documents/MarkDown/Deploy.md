@@ -41,10 +41,11 @@ sudo make modules_prepare
 
 ●　**pkt-gen**
 
-使用之前需要关闭流控制功能
+使用之前需要关闭流控制功能并开启混淆模式
 
 ```s
 sudo ethtool -A ethX autoneg off rx off tx off
+sudo ifconfig ethX promisc
 ```
 ## **遗留问题**
 
