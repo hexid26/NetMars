@@ -32,7 +32,7 @@ sudo make modules_prepare
 1. 其中，kernel 的路径都指向之前下载后进行处理过的源码路径；
 2. `--kernel-version` 指向的路径和 `/lib/modules/` 下的路径同名（**重要**）；
 3. `--select-version` 指定修改版驱动适配的版本号，在 git 的提交注释中查到。
-
+cd 
 编译 `make`
 
 安装 `sudo make install`

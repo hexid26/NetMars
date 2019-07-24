@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #define NETMAP_WITH_LIBS
+#define NETMAP_WITH_DEBUG
 #include <net/netmap_user.h>
 
 long int pps = 0;
