@@ -15,12 +15,10 @@ from time import clock
 def set_argparse():
   """Set the args&argv for command line mode"""
   parser = argparse.ArgumentParser()
-  parser.add_argument(
-      "--ip", type=str, default="192.168.109.131", help="Destination IP")
-  parser.add_argument("--port", type=int, default=53360,
-                      help="Destination Port")
-  parser.add_argument("--cnt", type=int, default=50000,
-                      help="Sum of packages to be sent")
+  parser.add_argument("--ip", type=str, default="192.168.3.121", help="Destination IP")
+  parser.add_argument("--s", type=str, default="192.168.3.120", help="Source IP")
+  parser.add_argument("--port", type=int, default=53360,help="Destination Port")
+  parser.add_argument("--cnt", type=int, default=50000,help="Sum of packages to be sent")
   return parser.parse_args()
 
 
@@ -66,6 +64,7 @@ def main():
   """Main function"""
   __logger__.info('Process start!')
   __logger__.debug("UDP target IP   = %s" % (__ARGS__.ip))
+  __logger__.debug("UDP source IP   = %s" % (__ARGS__.s))
   __logger__.debug("UDP target port =  %s" % (__ARGS__.port))
   sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP  无连接面向网络
   start = time.monotonic()
