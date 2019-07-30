@@ -1,9 +1,11 @@
-CFLAGS=-Wall -g -DSOLUTION
+CC=clang++
+CFLAGS=-Wall -g -DSOLUTION -O3
 PROGS=sink
 
 all: $(PROGS)
 
-sink: sink.o
+sink:
+	$(CC) $(CFLAGS) sink.cpp -o sink
 
 clean:
 	-rm -f *.o $(PROGS)

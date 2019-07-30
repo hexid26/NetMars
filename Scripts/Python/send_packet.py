@@ -76,7 +76,7 @@ def main():
       tmp_length = pkt_len
     sock.sendto(bytes(message_tuple[0][:tmp_length], "utf-8"), (__ARGS__.ip, __ARGS__.port))
     __logger__.info("Send %d bytes:\n%s" % (tmp_length, message_tuple[0][:tmp_length]))
-    key_in = input("Press Enter to continue...")
+    input("Press Enter to continue...")
   __logger__.info('Process end!')
 
 
