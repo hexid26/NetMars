@@ -47,11 +47,10 @@ static void receive_packets(struct netmap_ring *ring) {
     pkt_len = ring->slot[slot_idx].len;                    // pkt_len 是当前报文长度
     ring->head = ring->cur = nm_ring_next(ring, slot_idx); // 下一个槽位
     pkt_sum++;                                             // 统计收包个数
-    // if (idx % 10 == 0)
-    // {
-    //   printf("Rcv sum = %ld\r", idx);
-    //   fflush(stdout);
-    // }
+    /* if (pkt_sum % 10 == 0) {
+      printf("Rcv sum = %ld\r", pkt_sum);
+      fflush(stdout);
+    } */
     printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
     // // print_MacInfo(buf);
     print_IPInfo(buf);
