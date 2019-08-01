@@ -145,7 +145,6 @@ void print_TCPInfo(char *buffer, uint16_t tcp_frame_length)
   tcp_frame_header *tcp_ptr = (tcp_frame_header *)buffer;
   // ! TCP 报文中本身不包含其长度，但是可以通过 ip 报文中的长度计算得到
   // ! 已传入，tcp_frame_length 即为当前 tcp 包的总长度，减去 tcp 的报文头长度即为数据长度
-  uint8_t HLEN;
   bool URG_flag;
   bool ACK_flag;
   bool PSH_flag;
