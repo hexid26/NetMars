@@ -12,6 +12,8 @@
 #include <net/netmap_user.h>
 
 long int pkt_sum = 0; // 收包总数
+long int tcp_sum = 0; //tcp包总数
+long int udp_sum = 0; //udp包总数
 
 void show_help_info() {
   printf("可使用参数：[-i ethX]\n");
@@ -39,8 +41,7 @@ static void receive_packets(struct netmap_ring *ring) {
   int slot_idx;
   char *buf;
   int pkt_len;
-  long int tcp_sum = 0;
-  long int udp_sum = 0;
+
 
   // 遍历所有的槽位
   while (!nm_ring_empty(ring)) {
@@ -61,13 +62,13 @@ static void receive_packets(struct netmap_ring *ring) {
     //判断UDP，TCP并打印
     if(print_UDPandTCP_Info(buf) == 1)
     {
-      udp_sum++;
-      printf("\n udp sum = %ld", udp_sum);
+      tcp_sum++;
+      printf("udp sum = %ld", tcp_sum);
     }
     else if (print_UDPandTCP_Info(buf) == 2)
     {
-      tcp_sum++;
-      printf("\n tcp sum = %ld", tcp_sum);
+      udp_sum++;
+      printf("tcp sum = %ld", udp_sum);
     }
     
 
