@@ -61,7 +61,7 @@ static void receive_packets(struct netmap_ring *ring) {
     //print_IPInfo(buf);
     
     //判断UDP，TCP并打印
-    select_UDPorTCP == print_UDPandTCP_Info(buf);
+    select_UDPorTCP = print_UDPandTCP_Info(buf);
     if (select_UDPorTCP == 1)
     {
       tcp_sum++;
