@@ -250,7 +250,7 @@ int print_UDPandTCP_Info(char *buffer)
     print_TCPInfo((char *)ip_ptr + IHL, ip_frame_length - IHL);
     return 1;
   }
-  else if (ip_ptr->ip_Protocol == 17)
+  else (ip_ptr->ip_Protocol == 17)
   {
     print_UDPInfo((char *)ip_ptr + IHL);
     return 2;
