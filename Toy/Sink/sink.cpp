@@ -52,10 +52,11 @@ static void receive_packets(struct netmap_ring *ring) {
       fflush(stdout);
     } */
 
-    printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
+    //printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
     // // print_MacInfo(buf);
     //print_IPInfo(buf);
-
+    
+    //判断UDP，TCP并打印
     print_UDPandTCP_Info(buf);
 
     std::cout << std::endl;
