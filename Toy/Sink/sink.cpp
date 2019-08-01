@@ -41,6 +41,7 @@ static void receive_packets(struct netmap_ring *ring) {
   int slot_idx;
   char *buf;
   int pkt_len;
+  int select_UDPorTCP = 0;
 
 
   // 遍历所有的槽位
@@ -60,15 +61,16 @@ static void receive_packets(struct netmap_ring *ring) {
     //print_IPInfo(buf);
     
     //判断UDP，TCP并打印
-    if(print_UDPandTCP_Info(buf) == 1)
+    select_UDPorTCP == print_UDPandTCP_Info(buf);
+    if (select_UDPorTCP == 1)
     {
       tcp_sum++;
-      printf("udp sum = %ld", tcp_sum);
+      printf("tcp sum = %ld\n", tcp_sum);
     }
-    else if (print_UDPandTCP_Info(buf) == 2)
+    else if (select_UDPorTCP == 2)
     {
       udp_sum++;
-      printf("tcp sum = %ld", udp_sum);
+      printf("udp sum = %ld\n", udp_sum);
     }
     
 
