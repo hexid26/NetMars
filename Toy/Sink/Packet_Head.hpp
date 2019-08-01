@@ -113,6 +113,10 @@ void print_MacInfo(char *buffer) {
 
 // * 交换 uint16_t 的高低位
 inline uint16_t uint16_swap(uint16_t number) { return number >> 8 | number << 8; }
+// * 交换 uint32_t 的高低位
+inline uint32_t uint32_swap(uint32_t number) {
+  return ( (number << 24) | ((number & 0x00f0) << 8) | ((number & 0x0f00) >> 8) | (number >> 24);
+}
 
 // * 打印 UDP 包的信息
 void print_UDPInfo(char *buffer) {
@@ -130,7 +134,33 @@ void print_TCPInfo(char *buffer, uint16_t tcp_frame_length) {
   tcp_frame_header *tcp_ptr = (tcp_frame_header *)buffer;
   // ! TCP 报文中本身不包含其长度，但是可以通过 ip 报文中的长度计算得到
   // ! 已传入，tcp_frame_length 即为当前 tcp 包的总长度，减去 tcp 的报文头长度即为数据长度
-  printf(" 等待完成\n");
+  uint8_t HLEN;
+  bool URG_flag;
+  bool ACK_flag;
+  bool PSH_flag;
+  bool PST_flag;
+  bool SYN_flag;
+  bool FIN_flag;
+  uint16_t HeaderLenAndFlag = tcp_ptr->tcp_HeaderLenAndFlag;
+
+  HeaderLen = (HeaderLenAndFlag >> 12) * 4;
+  uint16_t data_len = tcp_frame_length - HeaderLen;
+
+  URG_flag = (HeaderLenAndFlag >> 5) & 0x01;
+  ACK_flag = (HeaderLenAndFlag >> 4) & 0x01;
+  PSH_flag = (HeaderLenAndFlag >> 3) & 0x01;
+  PST_flag = (HeaderLenAndFlag >> 2) & 0x01;
+  SYN_flag = (HeaderLenAndFlag >> 1) & 0x01;
+  FIN_flag = HeaderLenAndFlag & 0x01;
+
+  printf(" TCP frame INFO :: port %u to %u, data length = %u bytes, checksum = 0x%X, \n                   
+         Sequence Number = %u, Acknowledgment Number = %u, WindowSize = %u, \n",
+         uint16_swap(tcp_ptr->tcp_SrcPort), uint16_swap(tcp_ptr->tcp_DstPort), data_len,
+         uint16_swap(tcp_ptr->tcp_CheckSum), uint32_swap(tcp_ptr->tcp_SequNum), 
+         uint32_swap(tcp_ptr->tcp_AcknowledgeNum), uint16_swap(tcp_ptr->tcp_WindowSize));
+  printf("                   URG_flag = %d, ACK_flag = %d, PSH_flag = %d, PST_flag = %d, SYN_flag = %d, FIN_flag = %d\n",
+          URG_flag, ACK_flag, PSH_flag, PST_flag, SYN_flag, FIN_flag);
+  printf(" TCP data = %.*s\n", data_len, (char *)buffer + HeaderLen);
   return;
 }
 
