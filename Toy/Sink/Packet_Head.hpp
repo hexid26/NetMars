@@ -233,33 +233,30 @@ void print_IPInfo(char *buffer)
   return;
 }
 
-#endif
 
 
-void print_UDPandTCP_Info(char *buffer)
+int print_UDPandTCP_Info(char *buffer)
 {
-  mac_frame_header *mac_ptr = (mac_frame_header *)buffer;
-  if (mac_ptr->mac_EtherType == 0x0008)
+  unsigned short *ethertype = (unsigned short *)(buffer + 12);
+  if (*ethertype != 0x0008)
   {
-    int UDP_sum = 0;
-    int TCP_sum = 0;
-    ip_frame_header *ip_ptr = (ip_frame_header *)(buffer + 14); // ! skip 14 bytes of mac header
-    std::string protocal = "";
-    uint8_t IHL = (ip_ptr->ip_VersionAndIHL & 0x0f) * 4;
-    uint16_t ip_frame_length = uint16_swap(ip_ptr->ip_TotalLength);
-    if (ip_ptr->ip_Protocol == 6)
-    {
-      protocal = "TCP";
-      TCP_sum = TCP_sum + 1;
-      printf("TCP sum = %d", TCP_sum);
-      print_TCPInfo((char *)ip_ptr + IHL, ip_frame_length - IHL);
-    }
-    else if (ip_ptr->ip_Protocol == 17)
-    {
-      protocal = "UDP";
-      UDP_sum = UDP_sum + 1;
-      printf("UDP sum = %d", UDP_sum);
-      print_UDPInfo((char *)ip_ptr + IHL);
-    }
+    return 0;
+  }
+  ip_frame_header *ip_ptr = (ip_frame_header *)(buffer + 14);
+  uint8_t IHL = (ip_ptr->ip_VersionAndIHL & 0x0f) * 4;
+  uint16_t ip_frame_length = uint16_swap(ip_ptr->ip_TotalLength);
+  if (ip_ptr->ip_Protocol == 6)
+  {
+    print_TCPInfo((char *)ip_ptr + IHL, ip_frame_length - IHL);
+    return 1;
+  }
+  else if (ip_ptr->ip_Protocol == 17)
+  {
+    print_UDPInfo((char *)ip_ptr + IHL);
+    return 2;
   }
 }
+
+
+
+#endif
