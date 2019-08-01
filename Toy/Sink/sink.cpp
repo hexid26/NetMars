@@ -51,9 +51,13 @@ static void receive_packets(struct netmap_ring *ring) {
       printf("Rcv sum = %ld\r", pkt_sum);
       fflush(stdout);
     } */
+
     printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
     // // print_MacInfo(buf);
-    print_IPInfo(buf);
+    //print_IPInfo(buf);
+
+    print_UDPandTCP_Info(buf);
+
     std::cout << std::endl;
   }
 }

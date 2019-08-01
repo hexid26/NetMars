@@ -234,3 +234,26 @@ void print_IPInfo(char *buffer)
 }
 
 #endif
+
+
+void print_UDPandTCP_Info(char *buffer)
+{
+  mac_frame_header *mac_ptr = (mac_frame_header *)buffer;
+  if (mac_ptr->mac_EtherType == 0x0008)
+  {
+    ip_frame_header *ip_ptr = (ip_frame_header *)(buffer + 14); // ! skip 14 bytes of mac header
+    std::string protocal = "";
+    uint8_t IHL = (ip_ptr->ip_VersionAndIHL & 0x0f) * 4;
+    uint16_t ip_frame_length = uint16_swap(ip_ptr->ip_TotalLength);
+    if (ip_ptr->ip_Protocol == 6)
+    {
+      protocal = "TCP";
+      print_TCPInfo((char *)ip_ptr + IHL, ip_frame_length - IHL);
+    }
+    else if (ip_ptr->ip_Protocol == 17)
+    {
+      protocal = "UDP";
+      print_UDPInfo((char *)ip_ptr + IHL);
+    }
+  }
+}
