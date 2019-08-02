@@ -11,9 +11,9 @@
 #define NETMAP_WITH_DEBUG
 #include <net/netmap_user.h>
 
-long int pkt_sum = 0; // 收包总数
-long int tcp_sum = 0; //tcp包总数
-long int udp_sum = 0; //udp包总数
+unsigned long long pkt_sum = 0; // 收包总数
+unsigned long long tcp_sum = 0; // tcp包总数
+unsigned long long udp_sum = 0; // udp包总数
 
 void show_help_info() {
   printf("可使用参数：[-i ethX]\n");
@@ -27,8 +27,7 @@ void show_help_info() {
 // * 处理 interface 的接口名字， 根据情况在后面补上“/R”
 inline std::string process_suffix(std::string str) {
   int pos_slash = str.find_last_of('/');
-  if (pos_slash == std::string::npos)
-  {
+  if (pos_slash == std::string::npos) {
     str = str + "/Rx";
   } else {
     str = str.substr(0, pos_slash) + "/Rx";
@@ -40,42 +39,35 @@ inline std::string process_suffix(std::string str) {
 static void receive_packets(struct netmap_ring *ring) {
   int slot_idx;
   char *buf;
-  int pkt_len;
-  int select_UDPorTCP = 0;
-
+  // // int pkt_len;
 
   // 遍历所有的槽位
   while (!nm_ring_empty(ring)) {
     slot_idx = ring->cur;
     buf = NETMAP_BUF(ring, ring->slot[slot_idx].buf_idx);  // buf 就是收到的报文
-    pkt_len = ring->slot[slot_idx].len;                    // pkt_len 是当前报文长度
+    // // pkt_len = ring->slot[slot_idx].len;                    // pkt_len 是当前报文长度
     ring->head = ring->cur = nm_ring_next(ring, slot_idx); // 下一个槽位
     pkt_sum++;                                             // 统计收包个数
-    /* if (pkt_sum % 10 == 0) {
-      printf("Rcv sum = %ld\r", pkt_sum);
-      fflush(stdout);
-    } */
 
-    //printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
+    // //printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
     // // print_MacInfo(buf);
-    //print_IPInfo(buf);
-    
-    //判断UDP，TCP并打印
-    select_UDPorTCP = print_UDPandTCP_Info(buf);
-    if (select_UDPorTCP == 1)
-    {
-      tcp_sum++;
-      printf("tcp sum = %ld\n", tcp_sum);
-    }
-    else if (select_UDPorTCP == 2)
-    {
-      udp_sum++;
-      printf("udp sum = %ld\n", udp_sum);
-    }
-    
+    // print_IPInfo(buf);
 
-    std::cout << std::endl;
+    //判断UDP，TCP并打印
+    switch (is_TCPorUDP(buf)) {
+    case 1:
+      tcp_sum++;
+      printf("Pkt Sum = %llu; TCP Sum = %llu; UDP Sum = %llu\r", pkt_sum, tcp_sum, udp_sum);
+      break;
+    case 2:
+      udp_sum++;
+      printf("Pkt Sum = %llu; TCP Sum = %llu; UDP Sum = %llu\r", pkt_sum, tcp_sum, udp_sum);
+      break;
+    default:
+      break;
+    }
   }
+  fflush(stdout);
 }
 
 int main(int argc, char *argv[]) {

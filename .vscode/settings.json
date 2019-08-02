@@ -32,6 +32,10 @@
     "type_traits": "cpp",
     "typeinfo": "cpp",
     "utility": "cpp",
-    "iomanip": "cpp"
+    "iomanip": "cpp",
+    "__functional_base_03": "cpp",
+    "chrono": "cpp",
+    "ratio": "cpp",
+    "iostream": "cpp"
   }
 }
