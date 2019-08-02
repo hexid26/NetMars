@@ -46,7 +46,6 @@ static void receive_packets(struct netmap_ring *ring) {
     slot_idx = ring->cur;
     buf = NETMAP_BUF(ring, ring->slot[slot_idx].buf_idx);  // buf 就是收到的报文
     // // pkt_len = ring->slot[slot_idx].len;                    // pkt_len 是当前报文长度
-    ring->head = ring->cur = nm_ring_next(ring, slot_idx); // 下一个槽位
     pkt_sum++;                                             // 统计收包个数
 
     // //printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
@@ -66,6 +65,7 @@ static void receive_packets(struct netmap_ring *ring) {
     default:
       break;
     }
+    ring->head = ring->cur = nm_ring_next(ring, slot_idx); // 下一个槽位
   }
   fflush(stdout);
 }

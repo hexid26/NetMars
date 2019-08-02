@@ -244,11 +244,11 @@ int is_TCPorUDP(char *buffer) {
     return 0;
   }
   switch ((*(uint8_t *)(buffer + 23))) {
-  case 6:
+  case 6: // * TCP
     // print_TCPInfo(buffer + (uint8_t)(buffer[14] & 0xf) * 4, uint16_swap(*(uint16_t *)(buffer + 16)));
     return 1;
     break;
-  case 17:
+  case 17: // * UDP
     // print_UDPInfo(buffer + (uint8_t)(buffer[14] & 0xf) * 4);
     return 2;
     break;
