@@ -1,5 +1,6 @@
 #include <iostream>
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -70,7 +71,16 @@ static void receive_packets(struct netmap_ring *ring) {
   fflush(stdout);
 }
 
+void ctrl_c_handler(int singal){
+  printf(
+      "============================================================\nPkt Sum = %llu; TCP + IP = (%llu :: %llu, %llu)\n",
+      pkt_sum, tcp_sum + udp_sum, tcp_sum, udp_sum);
+  exit(1);
+}
+
 int main(int argc, char *argv[]) {
+  // * ctrl + c 中断时的输出
+  signal(SIGINT, ctrl_c_handler);
   struct nm_desc *d = NULL;
   struct pollfd fds;
   struct netmap_ring *ring;
