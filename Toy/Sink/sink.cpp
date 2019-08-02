@@ -6,15 +6,24 @@
 #include <string>
 #include <unistd.h>
 
+#include "PKT_Ring.hpp"
 #include "Packet_Head.hpp"
 
 #define NETMAP_WITH_LIBS
 #define NETMAP_WITH_DEBUG
 #include <net/netmap_user.h>
 
-unsigned long long pkt_sum = 0; // 收包总数
-unsigned long long tcp_sum = 0; // tcp包总数
-unsigned long long udp_sum = 0; // udp包总数
+unsigned long long pkt_sum = 0;  // 收包总数
+unsigned long long tcp_sum = 0;  // tcp包总数
+unsigned long long udp_sum = 0;  // udp包总数
+unsigned int max_pkt_length = 0; // 测试最大的以太网帧长度
+
+void ctrl_c_handler(int singal) {
+  printf(
+      "\n============================================================\nPkt Sum = %llu; TCP + IP = (%llu :: %llu, %llu)\n",
+      pkt_sum, tcp_sum + udp_sum, tcp_sum, udp_sum);
+  exit(1);
+}
 
 void show_help_info() {
   printf("可使用参数：[-i ethX]\n");
@@ -37,7 +46,7 @@ inline std::string process_suffix(std::string str) {
 }
 
 // * 收包处理函数
-static void receive_packets(struct netmap_ring *ring) {
+static void receive_packets(struct netmap_ring *ring, PKT_Ring *pkt_ring) {
   int slot_idx;
   char *buf;
   // // int pkt_len;
@@ -45,13 +54,17 @@ static void receive_packets(struct netmap_ring *ring) {
   // 遍历所有的槽位
   while (!nm_ring_empty(ring)) {
     slot_idx = ring->cur;
-    buf = NETMAP_BUF(ring, ring->slot[slot_idx].buf_idx);  // buf 就是收到的报文
+    buf = NETMAP_BUF(ring, ring->slot[slot_idx].buf_idx); // buf 就是收到的报文
     // // pkt_len = ring->slot[slot_idx].len;                    // pkt_len 是当前报文长度
-    pkt_sum++;                                             // 统计收包个数
+    pkt_sum++; // 统计收包个数
 
     // //printf("Packets %ld，Length %d Bytes\n", pkt_sum, pkt_len);
     // // print_MacInfo(buf);
     // print_IPInfo(buf);
+    if (max_pkt_length < ring->slot[slot_idx].len) {
+      max_pkt_length = ring->slot[slot_idx].len;
+      printf("\ndebug::max_pkt_length = %u\n", max_pkt_length);
+    }
 
     //判断UDP，TCP并打印
     switch (is_TCPorUDP(buf)) {
@@ -66,21 +79,23 @@ static void receive_packets(struct netmap_ring *ring) {
     default:
       break;
     }
+    if (pkt_ring->push(buf) < 0) {
+      printf(
+          "\n============================================================\nPkt Sum = %llu; TCP + IP = (%llu :: %llu, "
+          "%llu)\n",
+          pkt_sum, tcp_sum + udp_sum, tcp_sum, udp_sum);
+      free(pkt_ring);
+      exit(1);
+    }
     ring->head = ring->cur = nm_ring_next(ring, slot_idx); // 下一个槽位
   }
   fflush(stdout);
 }
 
-void ctrl_c_handler(int singal){
-  printf(
-      "============================================================\nPkt Sum = %llu; TCP + IP = (%llu :: %llu, %llu)\n",
-      pkt_sum, tcp_sum + udp_sum, tcp_sum, udp_sum);
-  exit(1);
-}
-
 int main(int argc, char *argv[]) {
   // * ctrl + c 中断时的输出
   signal(SIGINT, ctrl_c_handler);
+  PKT_Ring *pkt_ring_test = new PKT_Ring("test", std::stoi(std::string(argv[1])));
   struct nm_desc *d = NULL;
   struct pollfd fds;
   struct netmap_ring *ring;
@@ -129,7 +144,7 @@ int main(int argc, char *argv[]) {
     // 遍历所有的接收队列
     for (rx_queue_idx = d->first_rx_ring; rx_queue_idx <= d->last_rx_ring; rx_queue_idx++) {
       ring = NETMAP_RXRING(d->nifp, rx_queue_idx);
-      receive_packets(ring); // 处理 ring
+      receive_packets(ring, pkt_ring_test); // 处理 ring
     }
   }
 }

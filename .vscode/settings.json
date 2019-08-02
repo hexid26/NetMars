@@ -36,6 +36,23 @@
     "__functional_base_03": "cpp",
     "chrono": "cpp",
     "ratio": "cpp",
-    "iostream": "cpp"
+    "iostream": "cpp",
+    "__bit_reference": "cpp",
+    "__errc": "cpp",
+    "__locale": "cpp",
+    "__mutex_base": "cpp",
+    "__threading_support": "cpp",
+    "bitset": "cpp",
+    "cstdarg": "cpp",
+    "ctime": "cpp",
+    "ios": "cpp",
+    "istream": "cpp",
+    "locale": "cpp",
+    "mutex": "cpp",
+    "ostream": "cpp",
+    "sstream": "cpp",
+    "streambuf": "cpp",
+    "strstream": "cpp",
+    "system_error": "cpp"
   }
 }
