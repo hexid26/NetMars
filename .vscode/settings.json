@@ -53,6 +53,27 @@
     "sstream": "cpp",
     "streambuf": "cpp",
     "strstream": "cpp",
-    "system_error": "cpp"
+    "system_error": "cpp",
+    "__hash_table": "cpp",
+    "__node_handle": "cpp",
+    "__split_buffer": "cpp",
+    "array": "cpp",
+    "clocale": "cpp",
+    "cmath": "cpp",
+    "complex": "cpp",
+    "condition_variable": "cpp",
+    "deque": "cpp",
+    "optional": "cpp",
+    "fstream": "cpp",
+    "numeric": "cpp",
+    "queue": "cpp",
+    "random": "cpp",
+    "thread": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "bit": "cpp",
+    "*.tcc": "cpp",
+    "memory_resource": "cpp",
+    "cinttypes": "cpp"
   }
 }
