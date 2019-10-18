@@ -5,9 +5,7 @@
 3. element 里面是各个 NF，每个NF按照论文分成几个element，每个element对应一个头文件。
 
 # 注意
-代码还不完全，NF暂时还不能运行。
-- IP router中涉及路由表的部分（TBL24和TBLlong）还在研究
-- IPsec还有部分结构没弄清楚。
+- IPsec中IPsecESPencap.hh可以运行，但运行结束后会报错*** stack smashing detected ***: <unknown> terminated。
 
 ## **TODOList**
 
