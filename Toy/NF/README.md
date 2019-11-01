@@ -5,7 +5,7 @@
 3. element 里面是各个 NF，每个NF按照论文分成几个element，每个element对应一个头文件。
 
 # 注意
-运行IPsec encryption gateway/main.cc即可正常使用IPsec encryption gateway功能，程序会输出相关数据的值，可以在include/Packet.hh中调节测试包的相关参数。
+运行IPsec encryption gateway/main.cc即可正常使用IPsec encryption gateway功能，可以在include/Packet.hh中调节测试包的相关参数。
 
 task.json中的参数设定如下：
             "args": [

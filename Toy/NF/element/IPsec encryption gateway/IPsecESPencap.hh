@@ -157,7 +157,7 @@ public:
 		}
 		else
 		{
-			return 0;
+			return 1;
 			// FIXME: this is to encrypt all traffic regardless sa_entry lookup results.
 			//        (just for worst-case performance tests)
 			//unsigned f = (tunnel_counter ++) % num_tunnels;

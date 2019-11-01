@@ -5,7 +5,10 @@
 int main()
 {
     Packet pac;
-    (new IPsecESPencap())->process(10087, &pac);
-    (new IPsecAES())->process(10087, &pac);
-    (new IPsecAuthHMACSHA1())->process(10087, &pac);
+    int result = (new IPsecESPencap())->process(10087, &pac);
+    if (!result)
+    {
+        (new IPsecAES())->process(10087, &pac);
+        (new IPsecAuthHMACSHA1())->process(10087, &pac);
+    }
 }
