@@ -62,7 +62,6 @@ private:
 	int num_tunnels;								 //Maximum number of IPsec tunnels
 	function<uint64_t()> rand;						 //A random function.
 	struct espencap_sa_entry *sa_table_linear[1024]; //A temporary hack to allow all flows to be processed.
-	uint64_t tunnel_counter;
 
 public:
 	int process(int input_port, Packet *pkt)
@@ -176,20 +175,20 @@ public:
 		cout << "ESP头长度：" << sizeof(struct esphdr) << "字节" << endl;
 		cout << "带有ESP协议的新IP头长度：" << sizeof(struct iphdr) << "字节" << endl;
 		cout << "拓展后IP数据报长度=带有ESP协议的新IP头长度+ESP头长度+IP数据报长度+padding长度+extra长度+HAMC-SHA1 signature长度=" << extended_ip_len << "字节" << endl;
-		int length_to_extend = extended_ip_len - ip_len;
+		// int length_to_extend = extended_ip_len - ip_len;
 		assert(0 == (enc_size % AES_BLOCK_SIZE));
 		struct esphdr *esph = (struct esphdr *)(iph + 1);
 		uint8_t *encapped_iph = (uint8_t *)esph + sizeof(*esph);
 		uint8_t *esp_trail = encapped_iph + ip_len;
 		// Hack for latency measurement experiments.
-		uintptr_t latency_ptr = 0;
-		constexpr uintptr_t latency_offset = sizeof(struct ether_header) + sizeof(struct ipv4_hdr) + sizeof(struct udphdr);
+		// uintptr_t latency_ptr = 0;
+		// constexpr uintptr_t latency_offset = sizeof(struct ether_header) + sizeof(struct ipv4_hdr) + sizeof(struct udphdr);
 		static_assert(sizeof(struct udphdr) + sizeof(uint16_t) + sizeof(uint64_t) <= sizeof(struct esphdr) + sizeof(ipv4_hdr),
 					  "Encryption may overwrite latency!");
 		cout << "正在将原始IP头和payload的数据后移..." << endl;
 		memmove(encapped_iph, iph, ip_len); // copy the IP header and payload.
 		cout << "正在将padding部分初始化为0..." << endl;
-		memset(esp_trail, 0, pad_len);		// clear the padding.
+		memset(esp_trail, 0, pad_len); // clear the padding.
 		cout << "正在用" << pad_len << "和" << 0x04 << "填充extra部分..." << endl;
 		esp_trail[pad_len] = (uint8_t)pad_len; // store pad_len at the second byte from last.
 		esp_trail[pad_len + 1] = 0x04;		   // store IP-in-IP protocol id at the last byte.

@@ -1,0 +1,21 @@
+ping
+nbtstat
+netstat
+tracert
+net user
+net start
+net stop
+net localgroup
+net time
+net share
+net logoff
+net pause
+net password
+net send ip
+net ver
+net config
+telnet
+finger
+smurf
+fraggle
+ipconfig

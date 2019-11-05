@@ -19,6 +19,8 @@ protected:
     route_hash_t tables[33];
     uint16_t *TBL24;
     uint16_t *TBLlong;
+    char curr_path[256];
+    bool isNF;
 
 public:
     //此函数用于向tables中添加下一跳地址
@@ -33,14 +35,29 @@ public:
     int load_rib_from_file(
         route_hash_t *tables, const char *filename)
     {
+        isNF = false;
         FILE *fp;
         char buf[256];
+        for (int i = 0; i < 256; i++)
+        {
+            if (curr_path[i] == 'N' && curr_path[i + 1] == 'F' && curr_path[i + 2] == '\0')
+            {
+                isNF = true;
+                strcat(curr_path, "/element/IPv4 router");
+                break;
+            }
+            if (curr_path[i] == '\0')
+            {
+                break;
+            }
+        }
+        strcat(curr_path, "/");
+        strcat(curr_path, filename);
+        fp = fopen(curr_path, "r");
 
-        fp = fopen(filename, "r");
         if (fp == NULL)
         {
-            getcwd(buf, 256);
-            printf("IpCPULookup element: error during opening file \'%s\' from \'%s\'.: %s\n", filename, buf, strerror(errno));
+            printf("IpCPULookup element: error during opening file \'%s\'.: %s\n", filename, strerror(errno));
         }
         assert(fp != NULL);
 
@@ -124,7 +141,8 @@ public:
         // Loading IP forwarding table from file.
         // TODO: load it from parsed configuration.
 
-        const char *filename = "element/IPv4 router/routing_info.txt"; // TODO: remove it or change it to configuration..
+        const char *filename = "routing_info.txt"; // TODO: remove it or change it to configuration..
+        getcwd(curr_path, 256);
         printf("element::IPlookup: Loading the routing table entries from %s\n", filename);
         load_rib_from_file(tables, filename);
 
@@ -165,20 +183,35 @@ public:
         // rr_port = 0;
         initialize();
 
-        ofstream TBL24_out("element/IPv4 router/TBL24.txt");
-        ofstream TBLlong_out("element/IPv4 router/TBLlong.txt");
-        cout << "正在生成TBL24.txt，这可能需要很长的时间..." << endl;
-        for (int i = 0; i < get_TBL24_size(); i++)
-        {
-            TBL24_out << TBL24[i] << endl;
-        }
-        TBL24_out.close();
-        cout << "正在生成TBLlong.txt，这可能需要很长的时间..." << endl;
-        for (int i = 0; i < get_TBLlong_size(); i++)
-        {
-            TBLlong_out << TBLlong[i] << endl;
-        }
-        TBLlong_out.close();
+        //创建TBL24.txt和TBLlong.txt
+        // getcwd(curr_path, 256);
+        // if (isNF)
+        // {
+        //     strcat(curr_path, "/element/IPv4 router");
+        // }
+        // strcat(curr_path, "/");
+        // strcat(curr_path, "TBL24.txt");
+        // ofstream TBL24_out(curr_path);
+        // getcwd(curr_path, 256);
+        // if (isNF)
+        // {
+        //     strcat(curr_path, "/element/IPv4 router");
+        // }
+        // strcat(curr_path, "/");
+        // strcat(curr_path, "TBLlong.txt");
+        // ofstream TBLlong_out(curr_path);
+        // cout << "正在生成TBL24.txt，这可能需要很长的时间..." << endl;
+        // for (int i = 0; i < get_TBL24_size(); i++)
+        // {
+        //     TBL24_out << TBL24[i] << endl;
+        // }
+        // TBL24_out.close();
+        // cout << "正在生成TBLlong.txt，这可能需要很长的时间..." << endl;
+        // for (int i = 0; i < get_TBLlong_size(); i++)
+        // {
+        //     TBLlong_out << TBLlong[i] << endl;
+        // }
+        // TBLlong_out.close();
 
         struct ether_header *ethh = (struct ether_header *)pkt->data();
         struct ipv4_hdr *iph = (struct ipv4_hdr *)(ethh + 1);

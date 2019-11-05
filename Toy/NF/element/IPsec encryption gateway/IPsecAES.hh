@@ -43,7 +43,7 @@ public:
         int enc_size = encrypted_len + pad_len + 2; // additional two bytes mean the "extra" part.
         cout << "在其后添加新的extra部分，长度为：" << 2 << endl;
         cout << "加上新的padding部分和extra部分，enc_size长度为：" << enc_size << endl;
-        int err = 0;
+        // int err = 0;
         struct aes_sa_entry *sa_entry = NULL;
         if (anno_isset(&pkt->anno, NBA_ANNO_IPSEC_FLOW_ID))
         {

@@ -35,8 +35,8 @@ public:
 
         struct ether_header *ethh = (struct ether_header *)(pkt->data());
         struct iphdr *iph = (struct iphdr *)(ethh + 1);
-        struct esphdr *esph = (struct esphdr *)(iph + 1);
-        uint8_t *encaped_iph = (uint8_t *)esph + sizeof(*esph);
+        // struct esphdr *esph = (struct esphdr *)(iph + 1);
+        // uint8_t *encaped_iph = (uint8_t *)esph + sizeof(*esph);
         unsigned char *payload_out = (unsigned char *)((uint8_t *)ethh + sizeof(struct ether_header) + sizeof(struct iphdr));
         int payload_len = (ntohs(iph->tot_len) - (iph->ihl * 4) - SHA_DIGEST_LENGTH);
         cout << "需要认证的部分包括ESP头、封装后的IP头（原始IP头）、payload、extra几个部分，长度为：" << payload_len << endl;

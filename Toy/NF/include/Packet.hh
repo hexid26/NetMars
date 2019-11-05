@@ -167,7 +167,12 @@ public:
         cout << "\n>>[测试包]\n数据部分：";
         for (int i = 0; i < plen; i++)
         {
-            pdata[i] = rand() % (126 - 32 + 1) + 32;
+            while (1) //剔除反斜杆
+            {
+                pdata[i] = rand() % (126 - 32 + 1) + 32;
+                if (pdata[i] != 92)
+                    break;
+            }
             cout << (int)pdata[i] << " ";
         }
         cout << endl;
