@@ -1,6 +1,6 @@
 {
   "files.associations": {
-    "*.cu": "cpp",
+    "*.cu": "cuda",
     "string": "cpp",
     "__config": "cpp",
     "__debug": "cpp",
@@ -75,5 +75,30 @@
     "*.tcc": "cpp",
     "memory_resource": "cpp",
     "cinttypes": "cpp"
-  }
+  },
+  "cSpell.enabled": false,
+  "cSpell.enabledLanguageIds": [
+    "asciidoc",
+    "cpp",
+    "css",
+    "cuda",
+    "handlebars",
+    "html",
+    "javascript",
+    "javascriptreact",
+    "json",
+    "latex",
+    "less",
+    "markdown",
+    "php",
+    "plaintext",
+    "pub",
+    "restructuredtext",
+    "rust",
+    "scss",
+    "text",
+    "typescript",
+    "typescriptreact",
+    "yml"
+  ]
 }
