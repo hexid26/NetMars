@@ -1,44 +1,43 @@
-#ifndef __PACKET_HEAD_FUNCTION__
-#define __PACKET_HEAD_FUNCTION__
+#pragma once
 
+#include <stdio.h>
 #include <iomanip>
 #include <sstream>
-#include <stdio.h>
 #include <string>
 
 class PKT_Filter {
-public:
+ public:
   // * 数据帧定义，头14个字节，尾4个字节（尾部不用管）
   typedef struct _MAC_FRAME_HEADER {
-    u_int8_t mac_DstMacAddress[6]; // 目的mac地址
-    u_int8_t mac_SrcMacAddress[6]; // 源mac地址
-    u_int16_t mac_EtherType;       // 上一层协议类型，如0x0800代表上一层是IP协议，0x0806为arp
+    u_int8_t mac_DstMacAddress[6];  // 目的mac地址
+    u_int8_t mac_SrcMacAddress[6];  // 源mac地址
+    u_int16_t mac_EtherType;        // 上一层协议类型，如0x0800代表上一层是IP协议，0x0806为arp
   } mac_frame_header;
 
   // * IP 头定义，共 20 个字节
   typedef struct _IP_HEADER {
-    u_int8_t ip_VersionAndIHL; // 版本信息(前4位)，头长度(后4位)
-    u_int8_t ip_DSCPwithECN;   // 服务类型8位
-    u_int16_t ip_TotalLength;  // 数据包长度
-    u_int16_t ip_PacketID;     // 数据包标识
-    u_int16_t ip_Flagsinfo;    // 分片使用
-    u_int8_t ip_TTL;           // 存活时间
-    u_int8_t ip_Protocol;      // 协议类型
-    u_int16_t ip_CheckSum;     // 校验和
-    u_int8_t ip_SrcIP[4];      // 源ip
-    u_int8_t ip_DstIP[4];      // 目的ip
+    u_int8_t ip_VersionAndIHL;  // 版本信息(前4位)，头长度(后4位)
+    u_int8_t ip_DSCPwithECN;    // 服务类型8位
+    u_int16_t ip_TotalLength;   // 数据包长度
+    u_int16_t ip_PacketID;      // 数据包标识
+    u_int16_t ip_Flagsinfo;     // 分片使用
+    u_int8_t ip_TTL;            // 存活时间
+    u_int8_t ip_Protocol;       // 协议类型
+    u_int16_t ip_CheckSum;      // 校验和
+    u_int8_t ip_SrcIP[4];       // 源ip
+    u_int8_t ip_DstIP[4];       // 目的ip
   } ip_frame_header;
 
   // * TCP头定义，共 20 个字节
   typedef struct _TCP_HEADER {
-    u_int16_t tcp_SrcPort;          // 源端口号16bit
-    u_int16_t tcp_DstPort;          // 目的端口号16bit
-    u_int32_t tcp_SequNum;          // 序列号32bit
-    u_int32_t tcp_AcknowledgeNum;   // 确认号32bit
-    u_int16_t tcp_HeaderLenAndFlag; // 前4位：TCP头长度；中6位：保留；后6位：标志位
-    u_int16_t tcp_WindowSize;       // 窗口大小16bit
-    u_int16_t tcp_CheckSum;         // 检验和16bit
-    u_int16_t tcp_surgentPointer;   // 紧急数据偏移量16bit
+    u_int16_t tcp_SrcPort;           // 源端口号16bit
+    u_int16_t tcp_DstPort;           // 目的端口号16bit
+    u_int32_t tcp_SequNum;           // 序列号32bit
+    u_int32_t tcp_AcknowledgeNum;    // 确认号32bit
+    u_int16_t tcp_HeaderLenAndFlag;  // 前4位：TCP头长度；中6位：保留；后6位：标志位
+    u_int16_t tcp_WindowSize;        // 窗口大小16bit
+    u_int16_t tcp_CheckSum;          // 检验和16bit
+    u_int16_t tcp_surgentPointer;    // 紧急数据偏移量16bit
   } tcp_frame_header;
 
   // * TCP 报头后续选项定义
@@ -50,10 +49,10 @@ public:
 
   // * UDP头定义，共 8 个字节 (UDP 包最少 8 个字节)
   typedef struct _UDP_HEADER {
-    u_int16_t udp_SrcPort;   // 源端口号16bit
-    u_int16_t udp_DstPort;   // 目的端口号16bit
-    u_int16_t udp_PktLength; // 数据包总长度16bit
-    u_int16_t udp_CheckSum;  // 校验和16bit
+    u_int16_t udp_SrcPort;    // 源端口号16bit
+    u_int16_t udp_DstPort;    // 目的端口号16bit
+    u_int16_t udp_PktLength;  // 数据包总长度16bit
+    u_int16_t udp_CheckSum;   // 校验和16bit
   } udp_frame_header;
 
   PKT_Filter();
@@ -87,39 +86,39 @@ void PKT_Filter::print_MacInfo(char *buffer) {
   mac_frame_header *mac_ptr = (mac_frame_header *)buffer;
   std::string ether_type = "";
   switch (mac_ptr->mac_EtherType) {
-  case 0x0008:
-    ether_type = "IPv4";
-    break;
-  case 0x0608:
-    ether_type = "ARP";
-    break;
-  case 0x9b80:
-    ether_type = "AppleTalk(Ethertalk)";
-    break;
-  case 0xf38:
-    ether_type = "AARP";
-    break;
-  case 0xDD86:
-    ether_type = "IPv6";
-    break;
-  case 0x0888:
-    ether_type = "Flow Control";
-    break;
-  case 0xcc88:
-    ether_type = "LLDP";
-    break;
-  case 0x0689:
-    ether_type = "FCoE";
-    break;
-  case 0x1489:
-    ether_type = "FCoE Initialization";
-    break;
-  case 0x0090:
-    ether_type = "Ethernet Testing";
-    break;
-  default:
-    ether_type = "Untreated type: " + int_to_hex(mac_ptr->mac_EtherType);
-    break;
+    case 0x0008:
+      ether_type = "IPv4";
+      break;
+    case 0x0608:
+      ether_type = "ARP";
+      break;
+    case 0x9b80:
+      ether_type = "AppleTalk(Ethertalk)";
+      break;
+    case 0xf38:
+      ether_type = "AARP";
+      break;
+    case 0xDD86:
+      ether_type = "IPv6";
+      break;
+    case 0x0888:
+      ether_type = "Flow Control";
+      break;
+    case 0xcc88:
+      ether_type = "LLDP";
+      break;
+    case 0x0689:
+      ether_type = "FCoE";
+      break;
+    case 0x1489:
+      ether_type = "FCoE Initialization";
+      break;
+    case 0x0090:
+      ether_type = "Ethernet Testing";
+      break;
+    default:
+      ether_type = "Untreated type: " + int_to_hex(mac_ptr->mac_EtherType);
+      break;
   }
   printf(" MAC frame INFO :: %x:%x:%x:%x:%x:%x to %x:%x:%x:%x:%x:%x, EtherTpye = %s\n", mac_ptr->mac_SrcMacAddress[0],
          mac_ptr->mac_SrcMacAddress[1], mac_ptr->mac_SrcMacAddress[2], mac_ptr->mac_SrcMacAddress[3],
@@ -192,36 +191,36 @@ void PKT_Filter::print_IPInfo(char *buffer) {
     return;
   }
   uint8_t version;
-  ip_frame_header *ip_ptr = (ip_frame_header *)(buffer + 14); // ! skip 14 bytes of mac header
+  ip_frame_header *ip_ptr = (ip_frame_header *)(buffer + 14);  // ! skip 14 bytes of mac header
   std::string protocal = "";
   version = ip_ptr->ip_VersionAndIHL >> 4;
   uint8_t IHL = (ip_ptr->ip_VersionAndIHL & 0x0f) * 4;
   uint16_t ip_frame_length = uint16_swap(ip_ptr->ip_TotalLength);
   switch (ip_ptr->ip_Protocol) {
-  case 1:
-    protocal = "ICMP";
-    break;
-  case 2:
-    protocal = "IGMP";
-    break;
-  case 6:
-    protocal = "TCP";
-    break;
-  case 17:
-    protocal = "UDP";
-    break;
-  case 41:
-    protocal = "ENCAP";
-    break;
-  case 89:
-    protocal = "OSPF";
-    break;
-  case 132:
-    protocal = "SCTP";
-    break;
-  default:
-    protocal = "Untreated protocal: " + std::to_string(ip_ptr->ip_Protocol);
-    break;
+    case 1:
+      protocal = "ICMP";
+      break;
+    case 2:
+      protocal = "IGMP";
+      break;
+    case 6:
+      protocal = "TCP";
+      break;
+    case 17:
+      protocal = "UDP";
+      break;
+    case 41:
+      protocal = "ENCAP";
+      break;
+    case 89:
+      protocal = "OSPF";
+      break;
+    case 132:
+      protocal = "SCTP";
+      break;
+    default:
+      protocal = "Untreated protocal: " + std::to_string(ip_ptr->ip_Protocol);
+      break;
   }
   printf(
       " IP frame INFO :: %d.%d.%d.%d to %d.%d.%d.%d\n                  Version = %d; Total Length = %d; Header Length "
@@ -263,19 +262,17 @@ int PKT_Filter::is_TCPorUDP(char *buffer) {
     return 0;
   }
   switch ((*(uint8_t *)(buffer + 23))) {
-  case 6: // * TCP
-    // print_TCPInfo(buffer + (uint8_t)(buffer[14] & 0xf) * 4, uint16_swap(*(uint16_t *)(buffer + 16)));
-    return 1;
-    break;
-  case 17: // * UDP
-    // print_UDPInfo(buffer + (uint8_t)(buffer[14] & 0xf) * 4);
-    return 2;
-    break;
-  default:
-    // printf("other protocal\n");
-    return 0;
-    break;
+    case 6:  // * TCP
+      // print_TCPInfo(buffer + (uint8_t)(buffer[14] & 0xf) * 4, uint16_swap(*(uint16_t *)(buffer + 16)));
+      return 1;
+      break;
+    case 17:  // * UDP
+      // print_UDPInfo(buffer + (uint8_t)(buffer[14] & 0xf) * 4);
+      return 2;
+      break;
+    default:
+      // printf("other protocal\n");
+      return 0;
+      break;
   }
 }
-
-#endif

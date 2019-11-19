@@ -2,12 +2,12 @@
 #include <string>
 
 class PKT_Ring {
-private:
+ private:
   /* data */
-public:
+ public:
   std::string name;
-  size_t capacity; // 可以容纳的数据包的数量，每个包的预留大小为1514(1500+14)
-  constexpr uint16_t max_pkt_length = 1514;
+  size_t capacity;  // 可以容纳的数据包的数量，每个包的预留大小为1514(1500+14)
+  constexpr static uint16_t max_pkt_length = 1514;
   char *pkt_raw_data = NULL;
   long long head = 1;
   long long tail = 0;

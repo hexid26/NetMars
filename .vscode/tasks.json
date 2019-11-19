@@ -1,31 +1,131 @@
 {
-  // See https://go.microsoft.com/fwlink/?LinkId=733558 
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
   // for the documentation about the tasks.json format
   "version": "2.0.0",
+  "presentation": {
+    "echo": false,
+    "reveal": "silent",
+    "focus": false,
+    "panel": "shared"
+  },
+  "problemMatcher": "$gcc",
   "tasks": [
     {
+      "label": "GCC Debug",
       "type": "shell",
-      "label": "clang++ build active file",
-      "command": "/usr/bin/clang++",
-      "args": [
-        "-g",
-        "\"${file}\"",
-        "-o",
-        "\"${fileDirname}/${fileBasenameNoExtension}\"",
-        "-I",
-        "\"${fileDirname}/../../include\"",
-        "-I",
-        "\"/usr/local/opt/openssl/include\""
-      ],
-      "options": {
-        "cwd": "/usr/bin"
+      "group": "build",
+      "command": "g++",
+      "linux": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-g",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
       },
-      "problemMatcher": [
-        "$gcc"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
+      "osx": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-g",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
+      }
+    },
+    {
+      "label": "Clang++ Debug",
+      "type": "shell",
+      "group": "build",
+      "command": "clang++",
+      "linux": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-g",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
+      },
+      "osx": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-g",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
+      }
+    },
+    {
+      "label": "GCC release",
+      "type": "shell",
+      "group": "build",
+      "command": "g++",
+      "linux": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
+      },
+      "osx": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
+      }
+    },
+    {
+      "label": "Clang++ release",
+      "type": "shell",
+      "group": "build",
+      "command": "clang++",
+      "linux": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
+      },
+      "osx": {
+        "args": [
+          "-I/usr/local/include/opencv",
+          "-std=c++11",
+          "-Wall",
+          "-O3",
+          "-lboost_system",
+          "-lpthread",
+          "-L/usr/local/opt/openssl/lib",
+          "-I/usr/local/opt/openssl/include",
+          "\"./${relativeFile}\" -o \"${fileDirname}/${fileBasenameNoExtension}_cpp\""
+        ]
       }
     }
   ]
