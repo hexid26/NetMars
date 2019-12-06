@@ -1,33 +1,23 @@
 # 介绍
 
-目前包含以下三个NF的CPU版本：
-IPv4 router
-IPsec encryption gateway
-IDS
+1.IPv4 router
+	IPlookup模块GPU已实现
+2.IPsec encryption gateway
+	IPsecAES模块GPU已实现
+	IPsecAuthHMACSHA1模块GPU已实现
+3.IDS
+	ACMatch模块GPU已实现
+	PCREMatch模块GPU未实现
 
 # 注意
 
-task.json中的参数设定如下：
-            "args": [
-                "-g",
-                "${file}",
-                "-o",
-                "${fileDirname}/${fileBasenameNoExtension}",
-                "-I",
-                "${workspaceFolder}/include",
-                "-lssl",
-                "-lcrypto",
-                "-lpcre",
-		]
+1.必须安装的额外组件有Openssl、PCRE和CUDA
+2.每个NF文件夹下均有各自的Makefile文件
+3.可以通过更改include/Packet.hpp中的参数来修改网络包数据
+4.IPv4 router通过IPlookup.hpp中的#define USE_CUDA控制是否使用GPU
+5.IPsec encryption gateway通过IPsecAES.hpp中的#define USE_CUDA控制是否使用GPU
+6.IDS通过ACMatch.hpp中的#define USE_CUDA控制是否使用GPU
 
-## **TODOList**
+# 下一步
 
-### **2019-10-19 之前完成以下内容**
-
-* 朱安东
-- [ ] 按照我的这个模板
-- [ ] 自己添加
-
-* 谭超
-- [ ] 按照我的这个模板
-- [ ] 自己添加
+考虑GPU版NF中批处理的调度问题

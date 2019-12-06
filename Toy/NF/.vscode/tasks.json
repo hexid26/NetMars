@@ -5,18 +5,100 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "g++ build active file",
-            "command": "/usr/bin/g++",
+            "label": "IDS",
+            "command": "nvcc",
+            // "command": "/usr/bin/g++",
             "args": [
                 "-g",
                 "${file}",
+                "${fileDirname}/ac.cpp",
+                "${fileDirname}/ACMatch_GPU.cu",
+                "${fileDirname}/PCREMatch_GPU.cu",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}",
+                "${fileDirname}/${fileBasenameNoExtension}_cpp",
                 "-I",
                 "${workspaceFolder}/include",
-                "-lssl",
-                "-lcrypto",
-                "-lpcre",
+                "-I",
+                "/usr/local/cuda/include",
+                "-I",
+                "/usr/local/cuda/samples/common/inc",
+                "-l",
+                "pcre",
+                "-L",
+                "/usr/local/cuda/lib64",
+                "-L",
+                "/usr/local/cuda/samples/common/lib",
+            ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "IPsec encryption gateway",
+            "command": "nvcc",
+            // "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "${file}",
+                "${fileDirname}/IPsecAES_GPU.cu",
+                "${fileDirname}/IPsecAuthHMACSHA1_GPU.cu",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}_cpp",
+                "-I",
+                "${workspaceFolder}/include",
+                "-I",
+                "/usr/local/cuda/include",
+                "-I",
+                "/usr/local/cuda/samples/common/inc",
+                "-l",
+                "ssl",
+                "-l",
+                "crypto",
+                "-L",
+                "/usr/local/cuda/lib64",
+                "-L",
+                "/usr/local/cuda/samples/common/lib",
+            ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "IPv4 router",
+            "command": "nvcc",
+            // "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "${file}",
+                "${fileDirname}/IPlookup_GPU.cu",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}_cpp",
+                "-I",
+                "${workspaceFolder}/include",
+                "-I",
+                "/usr/local/cuda/include",
+                "-I",
+                "/usr/local/cuda/samples/common/inc",
+                "-L",
+                "/usr/local/cuda/lib64",
+                "-L",
+                "/usr/local/cuda/samples/common/lib",
             ],
             "options": {
                 "cwd": "/usr/bin"

@@ -7,10 +7,10 @@
 # find . -name "*.py" -exec cat '{}' \;|grep -v ^$|wc -l
 # find . -name "*.sh" -exec cat '{}' \;|grep -v ^$|wc -l
 
-cpp_line=`find . -name "*.cc" -exec cat '{}' \;|grep -v ^$|wc -l`
-hpp_line=`find . -name "*.hh" -exec cat '{}' \;|grep -v ^$|wc -l`
-cu_line=`find . -name "*.cu" -exec cat '{}' \;|grep -v ^$|wc -l`
-cuh_line=`find . -name "*.cuh" -exec cat '{}' \;|grep -v ^$|wc -l`
+cpp_line=`find . -name "*.cpp" -exec cat '{}' \;|grep -v ^$|wc -l` #CPU
+hpp_line=`find . -name "*.hpp" -exec cat '{}' \;|grep -v ^$|wc -l` #CPU
+cu_line=`find . -name "*.cu" -exec cat '{}' \;|grep -v ^$|wc -l` #GPU
+cuh_line=`find . -name "*.hh" -exec cat '{}' \;|grep -v ^$|wc -l` #GPU
 py_line=`find . -name "*.py" -exec cat '{}' \;|grep -v ^$|wc -l`
 sh_line=`find . -name "*.sh" -exec cat '{}' \;|grep -v ^$|wc -l`
 

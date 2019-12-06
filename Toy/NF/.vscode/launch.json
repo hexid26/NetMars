@@ -8,7 +8,7 @@
             "name": "g++ build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "program": "${fileDirname}/${fileBasenameNoExtension}_cpp",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -22,7 +22,9 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "g++ build active file",
+            // "preLaunchTask": "IDS",
+            "preLaunchTask": "IPsec encryption gateway",
+            // "preLaunchTask": "IPv4 router",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]
