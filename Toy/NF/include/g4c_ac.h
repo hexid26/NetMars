@@ -1,6 +1,7 @@
 #ifndef __G4C_AC_H__
 #define __G4C_AC_H__
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus

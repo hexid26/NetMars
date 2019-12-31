@@ -1,7 +1,9 @@
 #include "auxiliary.hpp"
 #include "NetStruct.hpp"
 
-#define SHA1_THREADS_PER_BLK 32
+// #define SHA1_THREADS_PER_BLK 32
+
+#define MAX_AUTHENTICATED_PART 1024
 
 extern "C"
 {
@@ -1210,57 +1212,99 @@ extern "C"
         *(out + 4) = swap(h.h5);
     }
 
-    __global__ static void computeHMAC_SHA1(
-        uint8_t *__restrict__ enc_payload_base,
-        uint32_t length,
-        uint8_t *__restrict__ hmac_key,
-        uint8_t *__restrict__ sha_digest)
+    __device__ static inline uint16_t u8tu16(uint8_t *data)
     {
-        if (enc_payload_base != NULL && length != 0)
+        uint16_t result = 0;
+        for (int i = 0; i < 2; i++)
         {
-            HMAC_SHA1((uint32_t *)(enc_payload_base),
-                      (uint32_t *)(enc_payload_base + length),
-                      length, (const char *)hmac_key);
-            for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
+            result += data[i] * pow(16, 2 - 2 * i);
+        }
+        return result;
+    }
+
+    __global__ static void computeHMAC_SHA1(
+        const int batch_size,
+        const int block_num_y,
+        uint8_t *__restrict__ dev_enc_payload,
+        uint8_t *__restrict__ pac_data,
+        unsigned int *__restrict__ pac_sign,
+        uint8_t *__restrict__ hmac_key)
+    {
+        int I = blockIdx.x * blockDim.x + threadIdx.x;
+        int J = blockIdx.y * blockDim.y + threadIdx.y;
+        int N = I * block_num_y * blockDim.y + J;
+
+        if (N < batch_size)
+        {
+            uint8_t *enc_payload = pac_data + pac_sign[N] + sizeof(struct ether_header) +
+                                   sizeof(struct iphdr);
+            uint8_t *ip_len = pac_data + pac_sign[N] + sizeof(struct ether_header) +
+                              2 * sizeof(uint8_t);
+            uint8_t ip_ihl = (pac_data + pac_sign[N] + sizeof(struct ether_header))[0];
+            int length = (u8tu16(ip_len) - ((int)ip_ihl % 16 * 4) - SHA_DIGEST_LENGTH);
+            if (length > MAX_AUTHENTICATED_PART)
             {
-                *(sha_digest + i) = *(enc_payload_base + length + i);
+                printf("External error, payload length too long.");
+            }
+            assert(length < MAX_AUTHENTICATED_PART);
+            for (int i = 0; i < length; i++)
+            {
+                *(dev_enc_payload + i) = *(enc_payload + i);
+            }
+            if (dev_enc_payload != NULL && length != 0)
+            {
+                HMAC_SHA1((uint32_t *)(dev_enc_payload),
+                          (uint32_t *)(dev_enc_payload + length),
+                          length, (const char *)hmac_key);
+                for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
+                {
+                    *(enc_payload + length + i) = *(dev_enc_payload + length + i);
+                }
             }
         }
+        __syncthreads();
     }
 }
 
 void ipsec_hsha1_encryption_get_cuda_kernel(
-    uint8_t *enc_payload_base,
-    uint32_t length,
-    uint8_t *hmac_key,
-    uint8_t *sha_digest)
+    uint8_t *pac_data, const int total_len, const int batch_size,
+    const unsigned int *pac_sign, uint8_t *hmac_key)
 {
-    printf("\nGPU加速中,获取设备信息：\n");
-    CheckGPUinfo();
+    // CheckGPUinfo();
 
     //定义device变量
-    uint8_t *dev_enc_payload_base, *dev_hmac_key, *dev_sha_digest;
+    uint8_t *dev_hmac_key;
+    uint8_t *dev_pac_data;
+    uint8_t *dev_enc_payload;
+    unsigned int *dev_pac_sign;
 
     //申请device内存
-    cudaMalloc((void **)&dev_enc_payload_base, length * sizeof(uint8_t));
+    cudaMalloc((void **)&dev_pac_data, total_len * sizeof(uint8_t));
+    cudaMalloc((void **)&dev_pac_sign, batch_size * sizeof(unsigned int));
+    cudaMalloc((void **)&dev_enc_payload, MAX_AUTHENTICATED_PART * sizeof(uint8_t));
     cudaMalloc((void **)&dev_hmac_key, HMAC_KEY_SIZE * sizeof(uint8_t));
-    cudaMalloc((void **)&dev_sha_digest, SHA_DIGEST_LENGTH * sizeof(uint8_t));
 
     //将host数据拷贝到device
-    cudaMemcpy(dev_enc_payload_base, enc_payload_base, length * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pac_data, pac_data, total_len * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pac_sign, pac_sign, batch_size * sizeof(unsigned int), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_hmac_key, hmac_key, HMAC_KEY_SIZE * sizeof(uint8_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_sha_digest, sha_digest, SHA_DIGEST_LENGTH * sizeof(uint8_t), cudaMemcpyHostToDevice);
 
     //定义kernel的执行配置
-    // dim3 blockSize(256);
-    // dim3 gridSize((8 + blockSize.x - 1) / blockSize.x);
-    computeHMAC_SHA1<<<1, 1>>>(dev_enc_payload_base, length, dev_hmac_key, dev_sha_digest);
+    dim3 threads_per_block(16, 16);
+    float block_x = sqrt((float)batch_size) / (float)threads_per_block.x;
+    int block_num_x = (block_x == int(block_x) ? block_x : int(block_x) + 1);
+    float block_y = sqrt((float)batch_size) / (float)threads_per_block.y;
+    int block_num_y = (block_y == int(block_y) ? block_y : int(block_y) + 1);
+    dim3 block_num(block_num_x, block_num_y);
+    computeHMAC_SHA1<<<block_num, threads_per_block>>>(
+        batch_size, block_num_y, dev_enc_payload,
+        dev_pac_data, dev_pac_sign, dev_hmac_key);
     cudaDeviceSynchronize();
 
     //将device的结果拷贝到host
-    cudaMemcpy(sha_digest, dev_sha_digest, SHA_DIGEST_LENGTH * sizeof(uint8_t), cudaMemcpyDeviceToHost);
+    cudaMemcpy(pac_data, dev_pac_data, total_len * sizeof(uint8_t), cudaMemcpyDeviceToHost);
 
-    cudaFree(dev_enc_payload_base);
+    cudaFree(dev_pac_data);
+    cudaFree(dev_pac_sign);
     cudaFree(dev_hmac_key);
-    cudaFree(dev_sha_digest);
 }

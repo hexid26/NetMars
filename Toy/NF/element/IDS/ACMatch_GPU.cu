@@ -1,4 +1,5 @@
 #include "auxiliary.hpp"
+#include "NetStruct.hpp"
 #include "ac.hpp"
 
 #define RULE_STRING_MAXSIZE 256
@@ -6,8 +7,9 @@
 
 extern "C"
 {
-    __device__ static int dev_strlen(const char *str)
+    __device__ int dev_strlen(const char *str)
     {
+
         int count = 0;
         while (*str)
         {
@@ -17,7 +19,10 @@ extern "C"
         return count;
     }
 
-    __device__ static int dev_ac_match(char *str, int len, unsigned int *res, int once, ac_machine_t *acm)
+    __device__ static int dev_ac_match(
+        uint8_t *str, int len,
+        unsigned int *res, int once,
+        ac_machine_t *acm)
     {
         int nm = 0;
         char c;
@@ -53,49 +58,69 @@ extern "C"
     /* The GPU kernel. */
     __global__ static void ids_acmatch_cuda(
         ac_machine_t *__restrict__ p_cacm,
-        char *__restrict__ packet_data,
-        int data_len,
+        uint8_t *__restrict__ pac_data,
+        unsigned int *__restrict__ pac_sign,
         int rule_nums,
-        unsigned int *__restrict__ res)
+        unsigned int *__restrict__ res,
+        const int block_num_y,
+        const int batch_size)
     {
-        int r = dev_ac_match(packet_data, dev_strlen(packet_data), res, 0, p_cacm);
-        printf("Matches: %d\n", r);
-        if (r > 0)
+        int I = blockIdx.x * blockDim.x + threadIdx.x;
+        int J = blockIdx.y * blockDim.y + threadIdx.y;
+        int N = I * block_num_y * blockDim.y + J;
+
+        if (N < batch_size)
         {
-            printf("ACMatch模块发现入侵字段！\n");
-            for (int i = 0; i < rule_nums; i++)
+            //定位每个包的数据部分
+            uint8_t *p_pac_data = pac_data + pac_sign[N] + 
+                                    sizeof(struct ether_header) + 
+                                    sizeof(struct ipv4_hdr) + 
+                                    sizeof(struct udphdr);
+            //计算每个包的数据部分长度
+            int p_pac_datalen = pac_sign[N + 1] - pac_sign[N] -
+                                sizeof(struct ether_header) -
+                                sizeof(struct ipv4_hdr) -
+                                sizeof(struct udphdr);
+
+            int r = dev_ac_match(p_pac_data, p_pac_datalen, res, 0, p_cacm);
+
+            if (r > 0)
             {
-                if (ac_res_found(res[i]))
-                    printf("Matched %s at %u.\n", p_cacm->dim1_patterns + i * RULE_STRING_MAXSIZE, ac_res_location(res[i]));
+                //ACMatch匹配到ac_rule_lib中的字符串
+                for (int i = 0; i < rule_nums; i++)
+                {
+                    if (ac_res_found(res[i]))
+                        printf("packet: %d  ACMatch模块发现入侵字段！ Matched %s at %u.\n", N, p_cacm->dim1_patterns + i * RULE_STRING_MAXSIZE, ac_res_location(res[i]));
+                }
             }
-            //ACMatch匹配到ac_rule_lib中的字符串
         }
-        printf("ACMatch模块没有检测到入侵字段！\n");
-        //该网络数据包是安全的
     }
 }
 
 void ids_acmatch_get_cuda_kernel(
     ac_machine_t *cacm,
-    char *packet_data,
-    int data_len,
-    int rule_nums)
+    const uint8_t *pac_data,
+    const unsigned int *pac_sign,
+    const int total_len,
+    const int batch_size,
+    const int rule_nums)
 {
-    printf("\nGPU加速中,获取设备信息：\n");
-    CheckGPUinfo();
+    // CheckGPUinfo();
 
     //定义host变量
     unsigned int *res = (unsigned int *)malloc(sizeof(unsigned int) * (rule_nums + 2));
     memset(res, 0, sizeof(unsigned int) * (rule_nums + 2));
 
     //定义device变量
-    unsigned int *dev_res;
     ac_machine_t *dev_cacm;
     ac_state_t *dev_states;
     int *dev_transitions;
     int *dev_outputs;
     char *dev_dim1_patterns;
-    char *dev_packet_data;
+
+    uint8_t *dev_pac_data;
+    unsigned int *dev_pac_sign;
+    unsigned int *dev_res;
 
     //将二维数组压平
     cacm->dim1_patterns = (char *)malloc(sizeof(char) * RULE_STRING_MAXSIZE * cacm->npatterns);
@@ -111,20 +136,24 @@ void ids_acmatch_get_cuda_kernel(
     cudaMalloc((void **)&dev_cacm, sizeof(ac_machine_t));
 
     //2.分配设备指针
-    cudaMalloc((void **)&dev_res, sizeof(unsigned int) * (rule_nums + 2));
     cudaMalloc((void **)&dev_states, sizeof(ac_state_t) * cacm->nstates);
     cudaMalloc((void **)&dev_transitions, sizeof(int) * cacm->nstates * AC_ALPHABET_SIZE);
     cudaMalloc((void **)&dev_outputs, sizeof(int) * cacm->noutputs);
     cudaMalloc((void **)&dev_dim1_patterns, sizeof(char) * RULE_STRING_MAXSIZE * cacm->npatterns);
-    cudaMalloc((void **)&dev_packet_data, sizeof(char) * data_len);
+
+    cudaMalloc((void **)&dev_pac_data, sizeof(uint8_t) * total_len);
+    cudaMalloc((void **)&dev_pac_sign, sizeof(unsigned int) * (batch_size - 1));
+    cudaMalloc((void **)&dev_res, sizeof(unsigned int) * (rule_nums + 2));
 
     //3.将指针内容从主机复制到设备
-    cudaMemcpy(dev_res, res, sizeof(unsigned int) * (rule_nums + 2), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_states, cacm->states, sizeof(ac_state_t) * cacm->nstates, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_transitions, cacm->transitions, sizeof(int) * cacm->nstates * AC_ALPHABET_SIZE, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_outputs, cacm->outputs, sizeof(int) * cacm->noutputs, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_dim1_patterns, cacm->dim1_patterns, sizeof(char) * RULE_STRING_MAXSIZE * cacm->npatterns, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_packet_data, packet_data, sizeof(char) * data_len, cudaMemcpyHostToDevice);
+
+    cudaMemcpy(dev_pac_data, pac_data, sizeof(uint8_t) * total_len, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pac_sign, pac_sign, sizeof(unsigned int) * (batch_size - 1), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_res, res, sizeof(unsigned int) * (rule_nums + 2), cudaMemcpyHostToDevice);
 
     //4.指向主机结构中的设备指针
     cacm->states = dev_states;
@@ -136,9 +165,20 @@ void ids_acmatch_get_cuda_kernel(
     cudaMemcpy(dev_cacm, cacm, sizeof(ac_machine_t), cudaMemcpyHostToDevice);
 
     //定义kernel的执行配置
-    // dim3 blockSize(256);
-    // dim3 gridSize((8 + blockSize.x - 1) / blockSize.x);
-    ids_acmatch_cuda<<<1, 1>>>(dev_cacm, dev_packet_data, data_len, rule_nums, dev_res);
+    dim3 threads_per_block(16, 16);
+    float block_x = sqrt((float)batch_size) / (float)threads_per_block.x;
+    int block_num_x = (block_x == int(block_x) ? block_x : int(block_x) + 1);
+    float block_y = sqrt((float)batch_size) / (float)threads_per_block.y;
+    int block_num_y = (block_y == int(block_y) ? block_y : int(block_y) + 1);
+    dim3 block_num(block_num_x, block_num_y);
+    ids_acmatch_cuda<<<block_num, threads_per_block>>>(
+        dev_cacm,
+        dev_pac_data,
+        dev_pac_sign,
+        rule_nums,
+        dev_res,
+        block_num_y,
+        batch_size);
     cudaDeviceSynchronize();
 
     cudaFree(dev_cacm);
@@ -146,5 +186,8 @@ void ids_acmatch_get_cuda_kernel(
     cudaFree(dev_transitions);
     cudaFree(dev_outputs);
     cudaFree(dev_dim1_patterns);
-    cudaFree(dev_packet_data);
+
+    cudaFree(dev_pac_data);
+    cudaFree(dev_pac_sign);
+    cudaFree(dev_res);
 }

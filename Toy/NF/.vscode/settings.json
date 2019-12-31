@@ -65,6 +65,16 @@
         "__debug": "cpp",
         "__functional_03": "cpp",
         "ios": "cpp",
-        "__string": "cpp"
+        "__string": "cpp",
+        "codecvt": "cpp",
+        "filesystem": "cpp",
+        "__nullptr": "cpp",
+        "__functional_base": "cpp",
+        "*.cuh": "cpp",
+        "__hash_table": "cpp",
+        "__split_buffer": "cpp",
+        "__tree": "cpp",
+        "__mutex_base": "cpp",
+        "__node_handle": "cpp"
     }
 }

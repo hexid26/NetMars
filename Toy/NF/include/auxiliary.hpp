@@ -1,9 +1,84 @@
 #pragma once
+#include <sys/sysinfo.h>
 #include <cuda_runtime.h>
 #include <stdio.h>
+#include <thread>
+#include <string.h>
+
+#define AVAIL_THREAD_NUM 3
+
+static void CheckCPUinfo()
+{
+    printf("CPU信息：\n");
+    FILE *fp;
+    char *buffer = NULL;
+    char content[256] = "";
+    size_t len = 0;
+    fp = fopen("/proc/cpuinfo", "rb");
+    while (getline(&buffer, &len, fp) != -1)
+    {
+        if (strstr(buffer, "vendor_id") != NULL)
+        {
+            buffer[strlen(buffer) - 1] = 0;
+            sscanf(buffer, "%*c%[^:]%*c%[^\n]", content, content);
+            sscanf(content, "%*[ ]%s%*[ ]", content);
+            printf("供应商名称：%s\n", content);
+        }
+        if (strstr(buffer, "model name") != NULL)
+        {
+            buffer[strlen(buffer) - 1] = 0;
+            sscanf(buffer, "%*c%[^:]%*c%[^\n]", content, content);
+            for (int i = 0; i < strlen(content) - 1; i++)
+            {
+                content[i] = content[i + 1];
+            }
+            content[strlen(content) - 1] = '\0';
+            printf("设备型号信息：%s\n", content);
+        }
+        if (strstr(buffer, "cpu MHz") != NULL)
+        {
+            buffer[strlen(buffer) - 1] = 0;
+            sscanf(buffer, "%*c%[^:]%*c%[^\n]", content, content);
+            sscanf(content, "%*[ ]%s%*[ ]", content);
+            printf("实际运行主频：%s MHz\n", content);
+        }
+        if (strstr(buffer, "cache size") != NULL)
+        {
+            buffer[strlen(buffer) - 1] = 0;
+            sscanf(buffer, "%*c%[^:]%*c%[^\n]", content, content);
+            sscanf(content, "%*[ ]%s%*[ ]", content);
+            printf("二级缓存大小：%s KB\n", content);
+        }
+        if (strstr(buffer, "cpu cores") != NULL)
+        {
+            buffer[strlen(buffer) - 1] = 0;
+            sscanf(buffer, "%*c%[^:]%*c%[^\n]", content, content);
+            sscanf(content, "%*[ ]%s%*[ ]", content);
+            printf("物理核心数量：%s\n", content);
+            break;
+        }
+    }
+    fclose(fp);
+    printf("逻辑内核数量：%d\n", int(get_nprocs()));
+    printf("最大线程数量：%d\n", int(std ::thread::hardware_concurrency()));
+    fp = fopen("/proc/meminfo", "rb");
+    while (getline(&buffer, &len, fp) != -1)
+    {
+        if (strstr(buffer, "MemTotal") != NULL)
+        {
+            buffer[strlen(buffer) - 1] = 0;
+            sscanf(buffer, "%*c%[^:]%*c%[^\n]", content, content);
+            sscanf(content, "%*[ ]%s%*[ ]", content);
+            printf("系统内存大小：%s KB\n", content);
+            break;
+        }
+    }
+    fclose(fp);
+}
 
 static bool CheckGPUinfo()
 {
+    printf("GPU信息：\n");
     int count = 0;
     int i = 0;
 

@@ -1264,64 +1264,103 @@ extern "C"
 #endif
     }
 
+    __device__ static inline uint16_t u8tu16(uint8_t *data)
+    {
+        uint16_t result = 0;
+        for (int i = 0; i < 2; i++)
+        {
+            result += data[i] * pow(16, 2 - 2 * i);
+        }
+        return result;
+    }
+
     __global__ static void AES_ctr128_encrypt_chunk(
-        uint8_t *__restrict__ iv,
-        uint8_t *__restrict__ in,
-        uint8_t *__restrict__ out,
-        uint32_t length,
+        const int batch_size,
+        const int block_num_y,
+        unsigned char *__restrict__ iv,
+        uint8_t *__restrict__ pac_data,
+        unsigned int *__restrict__ pac_sign,
         AES_KEY *__restrict__ aes_key)
     {
-        uint8_t ecount_buf[AES_BLOCK_SIZE] = {0};
-        unsigned mode = 0;
-        assert(in && out && aes_key && iv);
-        assert(mode < AES_BLOCK_SIZE);
-        while (length--)
+        int I = blockIdx.x * blockDim.x + threadIdx.x;
+        int J = blockIdx.y * blockDim.y + threadIdx.y;
+        int N = I * block_num_y * blockDim.y + J;
+
+        if (N < batch_size)
         {
-            if (mode == 0)
+            uint8_t *esp_iv = pac_data + pac_sign[N] + sizeof(struct ether_header) +
+                              sizeof(struct iphdr) + 2 * sizeof(uint32_t);
+            uint8_t *in, *out = pac_data + pac_sign[N] + sizeof(struct ether_header) +
+                                sizeof(struct iphdr) + sizeof(struct esphdr);
+            uint8_t *ip_len = pac_data + pac_sign[N] + sizeof(struct ether_header) +
+                              2 * sizeof(uint8_t);
+            in = out;
+            for (int i = 0; i < ESP_IV_LENGTH; i++)
             {
-                dev_AES_encrypt(iv, ecount_buf, aes_key);
-                dev_AES_ctr128_inc(iv);
+                iv[i] = esp_iv[i];
             }
-            *(out++) = *(in++) ^ ecount_buf[mode];
-            mode = (mode + 1) % AES_BLOCK_SIZE;
+            int encrypted_len = u8tu16(ip_len) - sizeof(struct iphdr) - sizeof(struct esphdr) - SHA_DIGEST_LENGTH;
+            int pad_len = AES_BLOCK_SIZE - (encrypted_len + 2) % AES_BLOCK_SIZE;
+            int length = encrypted_len + pad_len + 2;
+            uint8_t ecount_buf[AES_BLOCK_SIZE] = {0};
+            unsigned mode = 0;
+            assert(in && out && aes_key && iv);
+            assert(mode < AES_BLOCK_SIZE);
+            while (length--)
+            {
+                if (mode == 0)
+                {
+                    dev_AES_encrypt(iv, ecount_buf, aes_key);
+                    dev_AES_ctr128_inc(iv);
+                }
+                *(out++) = *(in++) ^ ecount_buf[mode];
+                mode = (mode + 1) % AES_BLOCK_SIZE;
+            }
         }
+        __syncthreads();
     }
 }
 
 void ipsec_aes_encryption_get_cuda_kernel(
-    uint8_t *iv,
-    uint8_t *enc_payload,
-    uint32_t length,
-    AES_KEY *aes_key)
+    uint8_t *pac_data, const int total_len, const int batch_size,
+    const unsigned int *pac_sign, AES_KEY *aes_key)
 {
-    printf("\nGPU加速中,获取设备信息：\n");
-    CheckGPUinfo();
+    // CheckGPUinfo();
 
     //定义device变量
-    uint8_t *dev_iv, *dev_enc_payload;
+    unsigned char *dev_iv;
     AES_KEY *dev_aes_key;
+    uint8_t *dev_pac_data;
+    unsigned int *dev_pac_sign;
 
     //申请device内存
-    cudaMalloc((void **)&dev_iv, ESP_IV_LENGTH * sizeof(uint8_t));
-    cudaMalloc((void **)&dev_enc_payload, length * sizeof(uint8_t));
+    cudaMalloc((void **)&dev_iv, ESP_IV_LENGTH * sizeof(unsigned char));
+    cudaMalloc((void **)&dev_pac_data, total_len * sizeof(uint8_t));
+    cudaMalloc((void **)&dev_pac_sign, batch_size * sizeof(unsigned int));
     cudaMalloc((void **)&dev_aes_key, sizeof(AES_KEY));
 
     //将host数据拷贝到device
-    cudaMemcpy(dev_iv, iv, ESP_IV_LENGTH * sizeof(uint8_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_enc_payload, enc_payload, length * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pac_data, pac_data, total_len * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_pac_sign, pac_sign, batch_size * sizeof(unsigned int), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_aes_key, aes_key, sizeof(AES_KEY), cudaMemcpyHostToDevice);
 
     //定义kernel的执行配置
-    // dim3 blockSize(256);
-    // dim3 gridSize((8 + blockSize.x - 1) / blockSize.x);
-    AES_ctr128_encrypt_chunk<<<1, 1>>>(dev_iv, dev_enc_payload, dev_enc_payload, length, dev_aes_key);
-
+    dim3 threads_per_block(16, 16);
+    float block_x = sqrt((float)batch_size) / (float)threads_per_block.x;
+    int block_num_x = (block_x == int(block_x) ? block_x : int(block_x) + 1);
+    float block_y = sqrt((float)batch_size) / (float)threads_per_block.y;
+    int block_num_y = (block_y == int(block_y) ? block_y : int(block_y) + 1);
+    dim3 block_num(block_num_x, block_num_y);
+    AES_ctr128_encrypt_chunk<<<block_num, threads_per_block>>>(
+        batch_size, block_num_y, dev_iv,
+        dev_pac_data, dev_pac_sign, dev_aes_key);
     cudaDeviceSynchronize();
 
     //将device的结果拷贝到host
-    cudaMemcpy(enc_payload, dev_enc_payload, length * sizeof(uint8_t), cudaMemcpyDeviceToHost);
+    cudaMemcpy(pac_data, dev_pac_data, total_len * sizeof(uint8_t), cudaMemcpyDeviceToHost);
 
     cudaFree(dev_iv);
-    cudaFree(dev_enc_payload);
+    cudaFree(dev_pac_data);
+    cudaFree(dev_pac_sign);
     cudaFree(dev_aes_key);
 }

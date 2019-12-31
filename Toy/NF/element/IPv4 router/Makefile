@@ -1,4 +1,4 @@
-main_cpp: main.cpp
-	nvcc -g main.cpp IPlookup_GPU.cu -o main_cpp -I ../../include -I /usr/local/cuda/include -I /usr/local/cuda/samples/common/inc -L /usr/local/cuda/lib64 -L /usr/local/cuda/samples/common/lib
+IPv4_router: IPv4_router.cpp
+	nvcc -g IPv4_router.cpp IPlookup_GPU.cu -o IPv4_router -I ../../include -I /usr/local/cuda/include -L /usr/local/cuda/lib64
 clean:
-	rm -rf main_cpp
+	rm -rf IPv4_router

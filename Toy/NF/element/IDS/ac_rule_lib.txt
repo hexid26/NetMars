@@ -1,10 +1,9 @@
-ping
-nbtstat
+uub
 netstat
-tracert
+rt
 net_user
 net_start
-net_stop
+net
 net_localgroup
 net_time
 net_share
@@ -19,3 +18,4 @@ finger
 smurf
 fraggle
 ipconfig
+aa
